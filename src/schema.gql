@@ -1,0 +1,89 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Book {
+  id: Int
+  name: String!
+  description: String!
+}
+
+type User {
+  id: ID!
+  email: String!
+  password: String!
+  name: String!
+  connection: String
+}
+
+type Query {
+  findBooks: [Book!]!
+  findBook(id: Int!): ResponseResult!
+  deleteBook(id: Int!): ResponseResult!
+}
+
+union ResponseResult = Book | User | NotFoundError | ValidationError | ServerError | JSONApiResponse
+
+type NotFoundError {
+  status: String!
+  message: String!
+  code: Int!
+  resourceType: String
+}
+
+type ValidationError {
+  status: String!
+  message: String!
+  code: Int!
+  validationError: String
+}
+
+type ServerError {
+  status: String!
+  message: String!
+  code: Int!
+  details: String
+}
+
+type JSONApiResponse {
+  status: String!
+  message: String!
+  code: Int!
+  user: User
+  books: [Book!]
+  book: Book
+  token: String
+  otp: String
+}
+
+type Mutation {
+  signUp(signUpDto: SignUpDto!): ResponseResult!
+  signIn(signInDto: SignInDto!): ResponseResult!
+  sendOtp(otpDto: OtpDto!): ResponseResult!
+  createBook(createInput: CreateInput!): ResponseResult!
+  updateBook(id: Int!, updateInput: UpdateInput!): ResponseResult!
+}
+
+input SignUpDto {
+  email: String!
+  name: String!
+}
+
+input SignInDto {
+  email: String!
+  code: String!
+}
+
+input OtpDto {
+  email: String!
+}
+
+input CreateInput {
+  name: String!
+  description: String!
+}
+
+input UpdateInput {
+  name: String
+  description: String
+}
