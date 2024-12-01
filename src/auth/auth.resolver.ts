@@ -4,7 +4,7 @@ import { OtpDto, ResponseResult, SignInDto, SignUpDto } from '../dto';
 import { HttpStatus, Logger, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from 'src/interceptors/validation';
 import { ResourceNotFoundException, ValidationFailedException } from 'src/utils/custom-exceptions.ts';
-import { handleError, handleSuccess } from 'src/utils/exceptions';
+import { ErrorWrapper, handleError, handleSuccess } from 'src/utils/exceptions';
 import { User } from 'src/entities/auth.entity';
 
 @Resolver(User)
@@ -16,7 +16,13 @@ export class AuthResolver {
     async signUp(@Args('signUpDto') signUpDto: SignUpDto): Promise<typeof ResponseResult> {
         try {
             const { data } = await this.authService.findOne({ email: signUpDto.email })
-            if(data?.length > 0) throw new ValidationFailedException('Email is already taken')
+            // if(data?.length > 0) throw new ValidationFailedException('Email is already taken')
+            if(data?.length > 0) {
+                ErrorWrapper('Email is already taken', {
+                    code: HttpStatus.BAD_REQUEST,
+                    typename: "ValidationError"
+                })
+            }
 
             const user: any = await this.authService.signup({ ...signUpDto, connection: process.env.CONNECTION_TYPE, password: "Password@1" })
             return handleSuccess({
@@ -30,7 +36,11 @@ export class AuthResolver {
             })
         } catch (error) {
             Logger.error(`Error registering new user: ${error?.message}`)
-            return handleError(error)
+            ErrorWrapper(error?.message, {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
+            // return handleError(error)
         }
     }
 

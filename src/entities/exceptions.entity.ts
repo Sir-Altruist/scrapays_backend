@@ -32,6 +32,29 @@ export class ValidationError extends BaseError {
   }
 }
 
+@ObjectType('UnauthorizationError')
+export class UnauthorizationError extends BaseError {
+  @Field(() => String, { nullable: true })
+  unauthorizationError?: string;
+  badToken?: boolean
+
+  constructor(partial: Partial<ValidationError>) {
+    super(partial);
+    Object.assign(this, partial);
+  }
+}
+
+@ObjectType('Forbidden')
+export class ForbiddenError extends BaseError {
+  @Field(() => String, { nullable: true })
+  message: string;
+
+  constructor(partial: Partial<ValidationError>) {
+    super(partial);
+    Object.assign(this, partial);
+  }
+}
+
 @ObjectType('NotFoundError')
 export class NotFoundError extends BaseError {
   @Field(() => String, { nullable: true })

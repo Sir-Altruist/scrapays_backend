@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { 
     ApiResponse, 
     AuthApiError, 
@@ -12,8 +12,7 @@ import {
     VoidApiResponse 
 } from 'auth0';
 import 'dotenv/config';
-import { ValidationFailedException } from 'src/utils/custom-exceptions.ts';
-// import * as jwt from "jsonwebtoken"
+import { ErrorWrapper } from '../utils/exceptions';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +39,10 @@ export class AuthService {
         } catch (error) {
             Logger.error(`Error in signup service: ${JSON.stringify(error)}`)
             if(error instanceof AuthApiError){
-                throw new ValidationFailedException(error?.error_description)
+                ErrorWrapper(error?.error_description, {
+                    code: HttpStatus.BAD_REQUEST,
+                    typename: "ValidationError"
+                })
             }
         }
     }
@@ -53,7 +55,10 @@ export class AuthService {
             return token;
         } catch (error) {
             Logger.error(`Error in signin service: ${JSON.stringify(error)}`)
-            throw new ValidationFailedException(error?.error_description)
+            ErrorWrapper(error?.error_description, {
+                code: HttpStatus.BAD_REQUEST,
+                typename: "ValidationError"
+            })
         }
     }
 
@@ -62,7 +67,10 @@ export class AuthService {
             return await this.management.usersByEmail.getByEmail(email)
         } catch (error) {
             Logger.error(`Error in finidng user: ${JSON.stringify(error)}`)
-            throw new ValidationFailedException(error?.error_description)
+            ErrorWrapper(error?.error_description, {
+                code: HttpStatus.BAD_REQUEST,
+                typename: "ValidationError"
+            })
         }
         
     }
@@ -72,7 +80,10 @@ export class AuthService {
             return await this.client.passwordless.sendEmail(payload)
         } catch (error) {
             Logger.error(`Error in sneding otp: ${JSON.stringify(error)}`)
-            throw new ValidationFailedException(error?.error_description)
+            ErrorWrapper(error?.error_description, {
+                code: HttpStatus.BAD_REQUEST,
+                typename: "ValidationError"
+            })
         }
     }
 }

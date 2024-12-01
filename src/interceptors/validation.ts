@@ -2,20 +2,21 @@ import {
     Injectable, 
     NestInterceptor, 
     ExecutionContext, 
-    CallHandler
+    CallHandler,
+    HttpStatus
   } from '@nestjs/common';
   import { validate } from 'class-validator';
   import { ValidationFailedException } from '../utils/custom-exceptions.ts.js';
 import { Observable, of } from 'rxjs';
 import { plainToInstance } from 'class-transformer';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { handleError } from 'src/utils/exceptions';
+import { ErrorWrapper, handleError } from '../utils/exceptions';
 
   
   @Injectable()
   export class ValidateInput implements NestInterceptor {
 
-    constructor(private readonly dto: any) {}
+    constructor(private readonly dto?: any) {}
 
     async intercept(
       context: ExecutionContext, 
@@ -47,7 +48,11 @@ import { handleError } from 'src/utils/exceptions';
             if (errors.length > 0) {
                 //Transform validation errors
                 const formattedErrors = errors.map(error => Object.values(error?.constraints || {}).join(','))
-                throw new ValidationFailedException(formattedErrors[0])
+                ErrorWrapper(formattedErrors[0], {
+                    code: HttpStatus.BAD_REQUEST,
+                    typename: "ValidationError"
+                })
+                // throw new ValidationFailedException(formattedErrors[0])
             }
              return next.handle();
         }

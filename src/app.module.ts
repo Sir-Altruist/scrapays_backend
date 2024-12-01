@@ -7,6 +7,8 @@ import { join } from 'path';
 import { ApolloDriverConfig, ApolloDriver } from '@nestjs/apollo';
 import { BookModule } from './book/book.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { GraphQLError } from 'graphql';
 
 @Module({
   imports: [GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -17,7 +19,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         "schema.polling.enable": false // This prevents suggestion pop-ups on playground
       }
     },
-    context: ({ req }) => ({ req })
+    context: ({ req }) => ({ req }),
+    formatError: (error: GraphQLError) => {
+      const { message, extensions } = error;
+      console.log('code: ', extensions?.code)
+      return {
+        message,
+        status: extensions?.status,
+        code: extensions?.code,
+        __typename: extensions?.__typename,
+      };
+    }
   }), 
   TypeOrmModule.forRoot({
     type: 'sqlite',
@@ -28,7 +40,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     migrationsRun: true,
     migrationsTableName: 'migrations'
   }),
-  AuthModule, 
+  AuthModule,
+  JwtModule.register({
+    global: true,
+    secret: process.env.AUTH0_CLIENT_SECRET,
+    signOptions: { expiresIn: "60m"}
+  }), 
   BookModule],
   controllers: [AppController],
   providers: [AppService],

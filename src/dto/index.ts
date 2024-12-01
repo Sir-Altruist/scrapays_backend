@@ -3,8 +3,10 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator"
 import { Book } from "../entities/book.entity"
 import { User } from "../entities/auth.entity"
 import { 
+    ForbiddenError,
     NotFoundError,
     ServerError, 
+    UnauthorizationError, 
     ValidationError 
 } from "../entities/exceptions.entity"
 import { JSONApiResponse } from "src/entities/response.entity"
@@ -58,6 +60,15 @@ export class OtpDto {
 }
 
 @InputType()
+export class AuthDto {
+    @Field()
+    unauthorizedError: string
+
+    @Field()
+    badToken: boolean | undefined
+}
+
+@InputType()
 export class UpdateInput extends PartialType(CreateInput) {}
 
 // const JSONApiResponse = objectType({
@@ -75,12 +86,14 @@ export const ResponseResult = createUnionType({
     types: () => [
         Book, 
         User, 
+        ForbiddenError,
         // BooksArray,
         // SuccessResponse, 
         NotFoundError, 
         ValidationError, 
         ServerError,
-        JSONApiResponse
+        JSONApiResponse,
+        UnauthorizationError
     ],
     /** Working */
     // types: () => [Book, User, NotFoundError, ValidationError, ServerError],
@@ -101,6 +114,10 @@ export const ResponseResult = createUnionType({
             return User;
         }
 
+
+        if(value?.error === 'Forbidden'){
+            return ForbiddenError
+        }
 
         // if(value instanceof SuccessResponse){
         //     return SuccessResponse

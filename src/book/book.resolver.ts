@@ -1,7 +1,7 @@
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { BookService } from './book.service';
 import { Book } from '../entities/book.entity';
-import { CreateInput, UpdateInput, ResponseResult } from '../dto';
+import { CreateInput, UpdateInput, ResponseResult, AuthDto } from '../dto';
 import { Logger, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from '../interceptors/validation';
 import { ValidationFailedException } from 'src/utils/custom-exceptions.ts';
@@ -15,6 +15,7 @@ export class BookResolver {
 
     @Query(() => [Book])
     @UseGuards(AuthGuard)
+    // @UseInterceptors(new ValidateInput())
     async findBooks(): Promise<Book[] | typeof ResponseResult>{
         try {
             return await this.bookService.findAll()
@@ -36,6 +37,7 @@ export class BookResolver {
     }
 
     @Query(() => ResponseResult)
+    @UseGuards(AuthGuard)
     async findBook(@Args('id', { type: () => Int}) id: number): Promise<typeof ResponseResult> {
         try {
 

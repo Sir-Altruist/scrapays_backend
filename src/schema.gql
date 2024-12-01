@@ -22,7 +22,13 @@ type Query {
   deleteBook(id: Int!): ResponseResult!
 }
 
-union ResponseResult = Book | User | NotFoundError | ValidationError | ServerError | JSONApiResponse
+union ResponseResult = Book | User | Forbidden | NotFoundError | ValidationError | ServerError | JSONApiResponse | UnauthorizationError
+
+type Forbidden {
+  status: String!
+  message: String
+  code: Int!
+}
 
 type NotFoundError {
   status: String!
@@ -54,6 +60,13 @@ type JSONApiResponse {
   book: Book
   token: String
   otp: String
+}
+
+type UnauthorizationError {
+  status: String!
+  message: String!
+  code: Int!
+  unauthorizationError: String
 }
 
 type Mutation {

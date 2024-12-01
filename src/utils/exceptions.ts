@@ -1,18 +1,23 @@
 // error-handler.util.ts
+// @apollo-server covers these
 // import { JSONApiResponse } from 'src/entities/response.entity';
 import { JSONApiResponse } from 'src/entities/response.entity';
-import { BaseError, ValidationError, ServerError, NotFoundError } from '../entities/exceptions.entity';
+import { BaseError, ValidationError, ServerError, NotFoundError, UnauthorizationError, ForbiddenError } from '../entities/exceptions.entity';
 import { 
   ResourceNotFoundException, 
   ValidationFailedException, 
-  ServerErrorException, 
+  ServerErrorException,
+  UnauthorizationException,
+  ForbiddenException, 
   // SuccessResponse
 } from './custom-exceptions.ts';
 import { HttpStatus } from '@nestjs/common';
 import { Book } from 'src/entities/book.entity';
 import { User } from 'src/entities/auth.entity';
+import { GraphQLError } from 'graphql';
 
 export function handleError(error: Error): BaseError {
+  console.log('error: ', error)
   if (error instanceof ResourceNotFoundException) {
     return new NotFoundError({
         status: "failed",
@@ -29,11 +34,20 @@ export function handleError(error: Error): BaseError {
     });
   }
 
-  if (error instanceof ServerErrorException) {
-    return new ServerError({
+  if (error instanceof UnauthorizationException) {
+    return new UnauthorizationError({
         status: "failed",
-        message: "Something went wrong. Please try again",
-        code: HttpStatus.INTERNAL_SERVER_ERROR
+        message: error.unauthorizationError,
+        code: HttpStatus.UNAUTHORIZED
+    });
+  }
+
+  if (error instanceof ForbiddenException) {
+    console.log('forbid: ', error)
+    return new ForbiddenError({
+        status: "failed",
+        message: error.message,
+        code: HttpStatus.FORBIDDEN
     });
   }
 
@@ -45,6 +59,15 @@ export function handleError(error: Error): BaseError {
     });
   }
 
+  if (error instanceof ServerErrorException) {
+    return new ServerError({
+        status: "failed",
+        message: "Something went wrong. Please try again",
+        code: HttpStatus.INTERNAL_SERVER_ERROR
+    });
+  }
+
+  // throw new ValidationFailedException(formattedErrors[0])
   // Fallback for unexpected errors
   return new ServerError({
         status: "failed",
@@ -71,4 +94,14 @@ export function handleSuccess(data: {
       token: data?.token,
       otp: data?.otp
     })
+}
+
+export function ErrorWrapper(message: string, options: { code: number, typename: string}){
+  throw new GraphQLError(message, {
+    extensions: {
+      code: options.code,
+      status: "failed",
+      typename: options.typename
+    }
+  })
 }
