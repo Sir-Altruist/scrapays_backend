@@ -42,6 +42,28 @@ export class BaseResponse {
   }
 }
 
+@ObjectType()
+export class SuccessResponse {
+  @Field(() => User, { nullable: true })
+  user?: User;
+
+  @Field({ nullable: true })
+  token?: string;
+
+  @Field(() => [Book], { nullable: true })
+  books?: Book[];
+
+  @Field()
+  message: string;
+
+  @Field(() => Int)
+  code: number;
+
+  @Field()
+  status: string;
+}
+
+
 @ObjectType('JSONApiResponse')
 export class JSONApiResponse extends BaseResponse {
   @Field(() => User, { nullable: true })

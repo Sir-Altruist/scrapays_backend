@@ -16,8 +16,17 @@ type User {
   connection: String
 }
 
+type SuccessResponse {
+  user: User
+  token: String
+  books: [Book!]
+  message: String!
+  code: Int!
+  status: String!
+}
+
 type Query {
-  findBooks: [Book!]!
+  findBooks: SuccessResponse!
   findBook(id: Int!): ResponseResult!
   deleteBook(id: Int!): ResponseResult!
 }
@@ -70,9 +79,9 @@ type UnauthorizationError {
 }
 
 type Mutation {
-  signUp(signUpDto: SignUpDto!): ResponseResult!
-  signIn(signInDto: SignInDto!): ResponseResult!
-  sendOtp(otpDto: OtpDto!): ResponseResult!
+  signUp(signUpDto: SignUpDto!): SuccessResponse!
+  signIn(signInDto: SignInDto!): SuccessResponse!
+  sendOtp(otpDto: OtpDto!): SuccessResponse!
   createBook(createInput: CreateInput!): ResponseResult!
   updateBook(id: Int!, updateInput: UpdateInput!): ResponseResult!
 }

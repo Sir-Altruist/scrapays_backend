@@ -1,83 +1,65 @@
-import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { Injectable, CanActivate, ExecutionContext, HttpStatus } from "@nestjs/common";
 import * as jwt from "jsonwebtoken"
 import { Observable, of } from "rxjs";
 import { ForbiddenException, UnauthorizationException } from "src/utils/custom-exceptions.ts";
-import { handleError } from "src/utils/exceptions";
+import { ErrorWrapper, handleError } from "src/utils/exceptions";
 import { ResponseResult } from "src/dto";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { JwtService } from "@nestjs/jwt"
+// import 
 import { GraphQLError } from "graphql";
+import { JwksClient } from "jwks-rsa";
+import utils from 'util'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(private jwtService: JwtService){}
-    async canActivate(context: ExecutionContext) {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const gqlContext = GqlExecutionContext.create(context);
-             // Convert to GraphQL context
-             // Get the arguments from the GraphQL context
+        // Convert to GraphQL context
+        // Get the arguments from the GraphQL context
         const req = gqlContext.getArgByIndex(2)['req'];
         const token = this.extractTokenFromHeader(req);
-        console.log('token: ', token)
+        console.log('key: ', process.env.AUTH0_CLIENT_SECRET)
         
-        try {
             if (!token) {
-                console.log('Token is invalid')
-                // throw new GraphQLError('Invalid token in header', {
-                //     extensions: {
-                //       code: 'Forbidden',
-                //       status: 'failed',
-                //       message: 'No token found',
-                //       __typename: 'Forbidden',
-                //     },
-                // });
-                // throw new ForbiddenException('No token in header')
-                // throw handleError({ message: 'No token in header', name: 'Forbidden'})
-                // return {
-                //     __typename: 'UnauthorizedError',
-                //     status: 'failed',
-                //     message: 'No token provided',
-                //     code: 401
-                // };
-                throw new GraphQLError('No token in header', {
-                    extensions: {
-                        code: 403,
-                        status: 'failed',
-                        message: 'No token in header',
-                        __typename: 'Forbidden'
-                    }
-                });
-                // return handleError({ message: "No token provided", name: "UnauthorizationException" })
-                // return of(new UnauthorizationException('No token provided')) 
+                throw ErrorWrapper("No token in header", {
+                    code: HttpStatus.FORBIDDEN,
+                    typename: "ForbiddenError"
+                })
             }
-            const payload = await this.jwtService.verifyAsync(token, { secret: process.env.AUTH0_CLIENT_SECRET });
-            console.log('decoded: ', payload)
-            req.user = payload; // Attach decoded token to request or GraphQL context
+        const decode = this.decodeToken(token)
+
+            console.log('here...: ', token)
+            // const payload = await this.jwtService.verifyAsync(token, { secret: process.env.AUTH0_CLIENT_SECRET });
+        const client = new JwksClient({
+            jwksUri: "https://dev-qwjbxsbvc8ccbe2d.us.auth0.com/.well-known/jwks.json",
+            rateLimit: true,
+            cache: true,
+            jwksRequestsPerMinute: 10
+        })
+        const getSignKey = utils.promisify(client.getSigningKey)
+            
+        try {
+            // const key = await getSignKey(decode?.header?.kid)
+            // const getSigningKey = key.
+            // console.log('decoded: ', payload)
+            // req.user = payload; // Attach decoded token to request or GraphQL context
             return true;
         } catch (err) {
-            console.log('authorization: ', err)
-            if(err instanceof jwt.JsonWebTokenError) throw new UnauthorizationException("Invalid token in header", true)
-            if(err instanceof jwt.TokenExpiredError) throw new UnauthorizationException("Token is expired. Kindly login again", true)
-            // if(err instanceof ForbiddenException) {
-                // throw new ForbiddenException('No token in header')
-                // throw new GraphQLError('Invalid token in header', {
-                //     extensions: {
-                //       code: 'Forbidden',
-                //       status: 'failed',
-                //       message: 'No token found',
-                //       __typename: 'Forbidden',
-                //     },
-                // });
-            // }
+            if(err instanceof jwt.JsonWebTokenError) {
+                throw ErrorWrapper("Invalid token in header", {
+                    code: HttpStatus.UNAUTHORIZED,
+                    typename: "AuthorizationError"
+                })
+            }
+            if(err instanceof jwt.TokenExpiredError) {
+                throw ErrorWrapper("Token is expired. Kindly login again", {
+                    code: HttpStatus.UNAUTHORIZED,
+                    typename: "Authorization"
+                })
+            }
             throw err
-            // throw handleError(err)
-            // return false
-            // throw handleError({
-            //     message: err?.message,
-            //     name: "forbidden"
-            // })
-            // return false
-            // return of(handleError(err))
-            // throw new UnauthorizationException('Invalid or expired token', true);
         }
 
     }
@@ -86,7 +68,16 @@ export class AuthGuard implements CanActivate {
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
           return null;
         }
-        console.log('authHeader: ', authHeader)
         return authHeader.split(' ')[1];
-      }
+    }
+
+    private decodeToken(token: string){
+        const decoded = jwt.decode(token, { complete: true, json: true })
+        if(!decoded || !decoded.header || !decoded.header.kid){
+        throw ErrorWrapper("Invalid token in header", {
+            code: HttpStatus.UNAUTHORIZED,
+            typename: "AuthorizationError"
+        })
+  }
+    }
 }

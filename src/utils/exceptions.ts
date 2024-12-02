@@ -15,6 +15,10 @@ import { HttpStatus } from '@nestjs/common';
 import { Book } from 'src/entities/book.entity';
 import { User } from 'src/entities/auth.entity';
 import { GraphQLError } from 'graphql';
+import { JwksClient } from 'jwks-rsa';
+import util from 'util'
+import * as jwt from 'jsonwebtoken'
+// import { JWE}
 
 export function handleError(error: Error): BaseError {
   console.log('error: ', error)
@@ -76,32 +80,58 @@ export function handleError(error: Error): BaseError {
   });
 }
 
-export function handleSuccess(data: {
-  message: string, 
-  code?: number, 
-  user?: User, 
-  books?: [Book], 
-  book?: Book, 
-  token?: string,
-  otp?: string
-}): JSONApiResponse {
-    return new JSONApiResponse({
-      message: data.message,
-      code: data.code || HttpStatus.OK,
-      user: data?.user,
-      books: data?.books,
-      book: data?.book,
-      token: data?.token,
-      otp: data?.otp
-    })
+// export function handleSuccess<T>(data: {
+//   message: string, 
+//   code?: number, 
+//   details: any;
+// }) {
+//     return new JSONApiResponse({
+//       message: data.message,
+//       code: data.code || HttpStatus.OK,
+//       details: data?.details
+//       // user: data?.user,
+//       // books: data?.books,
+//       // book: data?.book,
+//       // token: data?.token,
+//       // otp: data?.otp
+//     })
+// }
+
+export function SuccessWrapper<T>(data: T, message: string, extensions: { code: number; typename: string }) {
+  return {
+    data,
+    message,
+    extensions: {
+      code: extensions.code,
+      typename: extensions.typename,
+    },
+  };
 }
 
-export function ErrorWrapper(message: string, options: { code: number, typename: string}){
-  throw new GraphQLError(message, {
+export function ErrorWrapper(message: string, options: { code: number | string, typename: string}){
+  return new GraphQLError(message, {
     extensions: {
       code: options.code,
       status: "failed",
       typename: options.typename
     }
   })
+}
+
+export async function verifyToken(token: string){
+  const client = new JwksClient({
+    jwksUri: "",
+    rateLimit: true,
+    cache: true,
+    jwksRequestsPerMinute: 10
+  })
+
+  const getSignKey = util.promisify(client.getSigningKey)
+  const decoded = jwt.decode(token, { complete: true, json: true })
+  if(!decoded || !decoded.header || !decoded.header.kid){
+    throw ErrorWrapper("Invalid token in header", {
+      code: HttpStatus.UNAUTHORIZED,
+      typename: "AuthorizationError"
+    })
+  }
 }

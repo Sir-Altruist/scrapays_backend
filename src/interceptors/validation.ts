@@ -10,7 +10,8 @@ import {
 import { Observable, of } from 'rxjs';
 import { plainToInstance } from 'class-transformer';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { ErrorWrapper, handleError } from '../utils/exceptions';
+import { ErrorWrapper } from '../utils/exceptions';
+import { GraphQLError } from 'graphql';
 
   
   @Injectable()
@@ -48,7 +49,7 @@ import { ErrorWrapper, handleError } from '../utils/exceptions';
             if (errors.length > 0) {
                 //Transform validation errors
                 const formattedErrors = errors.map(error => Object.values(error?.constraints || {}).join(','))
-                ErrorWrapper(formattedErrors[0], {
+                throw ErrorWrapper(formattedErrors[0], {
                     code: HttpStatus.BAD_REQUEST,
                     typename: "ValidationError"
                 })
@@ -57,7 +58,14 @@ import { ErrorWrapper, handleError } from '../utils/exceptions';
              return next.handle();
         }
         catch (error) {
-            return of(handleError(error))
+            if(error instanceof GraphQLError) {
+                throw error
+            }
+
+            throw ErrorWrapper(error?.message, {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 }

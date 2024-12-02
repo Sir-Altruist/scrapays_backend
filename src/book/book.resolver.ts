@@ -1,27 +1,40 @@
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { BookService } from './book.service';
-import { Book } from '../entities/book.entity';
-import { CreateInput, UpdateInput, ResponseResult, AuthDto } from '../dto';
-import { Logger, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CreateInput, UpdateInput, ResponseResult } from '../dto';
+import { HttpStatus, Logger, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from '../interceptors/validation';
 import { ValidationFailedException } from 'src/utils/custom-exceptions.ts';
-import { handleError } from 'src/utils/exceptions';
+import { ErrorWrapper, handleError } from 'src/utils/exceptions';
 import { AuthGuard } from 'src/auth/auth-token';
+import { SuccessResponse } from 'src/entities/response.entity';
+import { GraphQLError } from 'graphql';
+import { JwtAuthGuard } from 'src/middlewares/authGuard';
 
 
-@Resolver(Book)
+@Resolver(SuccessResponse)
+@UseGuards(JwtAuthGuard)
 export class BookResolver {
     constructor(private readonly bookService: BookService){}
 
-    @Query(() => [Book])
-    @UseGuards(AuthGuard)
-    // @UseInterceptors(new ValidateInput())
-    async findBooks(): Promise<Book[] | typeof ResponseResult>{
+    @Query(() => SuccessResponse)
+    async findBooks(): Promise<SuccessResponse>{
         try {
-            return await this.bookService.findAll()
+            const books = await this.bookService.findAll()
+            return {
+                books,
+                message: "Successfully retrieved all books",
+                status: "success",
+                code: HttpStatus.OK
+            }
         } catch (error) {
             Logger.error(`Error retrieving all books: ${error?.message}`)
-            return handleError(error);
+            if(error instanceof GraphQLError){
+                throw error;
+            }
+            throw ErrorWrapper("Something went wrong! Please retry", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 
@@ -37,7 +50,6 @@ export class BookResolver {
     }
 
     @Query(() => ResponseResult)
-    @UseGuards(AuthGuard)
     async findBook(@Args('id', { type: () => Int}) id: number): Promise<typeof ResponseResult> {
         try {
 

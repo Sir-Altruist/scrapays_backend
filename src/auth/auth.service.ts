@@ -13,6 +13,7 @@ import {
 } from 'auth0';
 import 'dotenv/config';
 import { ErrorWrapper } from '../utils/exceptions';
+import { GraphQLError } from 'graphql';
 
 @Injectable()
 export class AuthService {
@@ -37,27 +38,45 @@ export class AuthService {
         try {
             return await this.client.database.signUp(payload);
         } catch (error) {
-            Logger.error(`Error in signup service: ${JSON.stringify(error)}`)
+            Logger.error(`Error in signup service: ${error?.error_description}`)
             if(error instanceof AuthApiError){
-                ErrorWrapper(error?.error_description, {
-                    code: HttpStatus.BAD_REQUEST,
-                    typename: "ValidationError"
+                throw ErrorWrapper(error?.error_description, {
+                    code: error?.statusCode,
+                    typename: error?.body ? JSON.parse(error.body).name : "AuthError"
                 })
             }
+
+            if(error instanceof GraphQLError){
+                throw error
+            }
+
+            throw ErrorWrapper("Something went wrong. Please retry", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 
     async signin(data: LoginWithEmailRequest): Promise<any> {
         try {
-            const token: any = await this.client.passwordless.loginWithEmail(data);
-            // const decoded = jwt.decode(token);
-            // console.log('Decoded Token:', decoded);
-            return token;
+            return await this.client.passwordless.loginWithEmail(data);
         } catch (error) {
-            Logger.error(`Error in signin service: ${JSON.stringify(error)}`)
-            ErrorWrapper(error?.error_description, {
-                code: HttpStatus.BAD_REQUEST,
-                typename: "ValidationError"
+            Logger.error(`Error in signin service: ${error?.error_description}`)
+
+            if(error instanceof AuthApiError){
+                throw ErrorWrapper(error?.error_description, {
+                    code: error?.statusCode,
+                    typename: error?.body ? JSON.parse(error.body).name : "AuthError"
+                })
+            }
+
+            if(error instanceof GraphQLError){
+                throw error
+            }
+
+            throw ErrorWrapper("Something went wrong. Please retry", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
             })
         }
     }
@@ -66,23 +85,44 @@ export class AuthService {
         try {
             return await this.management.usersByEmail.getByEmail(email)
         } catch (error) {
-            Logger.error(`Error in finidng user: ${JSON.stringify(error)}`)
-            ErrorWrapper(error?.error_description, {
-                code: HttpStatus.BAD_REQUEST,
-                typename: "ValidationError"
+            Logger.error(`Error in finidng user: ${error?.error_description}`)
+            if(error instanceof AuthApiError){
+                throw ErrorWrapper(error?.error_description, {
+                    code: error?.statusCode,
+                    typename: error?.body ? JSON.parse(error.body).name : "AuthError"
+                })
+            }
+
+            if(error instanceof GraphQLError){
+                throw error
+            }
+
+            throw ErrorWrapper("Something went wrong. Please retry", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
             })
         }
-        
     }
 
     async sendOtp(payload: SendEmailRequest): Promise<VoidApiResponse> {
         try {
             return await this.client.passwordless.sendEmail(payload)
         } catch (error) {
-            Logger.error(`Error in sneding otp: ${JSON.stringify(error)}`)
-            ErrorWrapper(error?.error_description, {
-                code: HttpStatus.BAD_REQUEST,
-                typename: "ValidationError"
+            Logger.error(`Error in sneding otp: ${error?.error_description}`)
+            if(error instanceof AuthApiError){
+                throw ErrorWrapper(error?.error_description, {
+                    code: error?.statusCode,
+                    typename: error?.body ? JSON.parse(error.body).name : "AuthError"
+                })
+            }
+
+            if(error instanceof GraphQLError){
+                throw error
+            }
+
+            throw ErrorWrapper("Something went wrong. Please retry", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
             })
         }
     }
