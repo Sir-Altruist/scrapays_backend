@@ -24,7 +24,7 @@ export class AuthResolver {
                 })
             }
 
-            const user = await this.authService.signup({ ...signUpDto, connection: process.env.CONNECTION_TYPE, password: "Password@1" })
+            const user = await this.authService.signup({ ...signUpDto, connection: process.env.CONNECTION_TYPE, password: process.env.CLIENT_PASSWORD })
             return {
                 user: {
                     id: user?.data?.['_id'],
