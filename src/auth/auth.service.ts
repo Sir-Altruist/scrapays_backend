@@ -12,7 +12,7 @@ import {
     VoidApiResponse 
 } from 'auth0';
 import 'dotenv/config';
-import { ErrorWrapper } from '../utils/exceptions';
+import * as Tools from '../utils/tool';
 import { GraphQLError } from 'graphql';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class AuthService {
         } catch (error) {
             Logger.error(`Error in signup service: ${error?.error_description}`)
             if(error instanceof AuthApiError){
-                throw ErrorWrapper(error?.error_description, {
+                throw Tools.ErrorWrapper(error?.error_description, {
                     code: error?.statusCode,
                     typename: error?.body ? JSON.parse(error.body).name : "AuthError"
                 })
@@ -50,7 +50,7 @@ export class AuthService {
                 throw error
             }
 
-            throw ErrorWrapper("Something went wrong. Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong. Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
@@ -64,7 +64,7 @@ export class AuthService {
             Logger.error(`Error in signin service: ${error?.error_description}`)
 
             if(error instanceof AuthApiError){
-                throw ErrorWrapper(error?.error_description, {
+                throw Tools.ErrorWrapper(error?.error_description, {
                     code: error?.statusCode,
                     typename: error?.body ? JSON.parse(error.body).name : "AuthError"
                 })
@@ -74,7 +74,7 @@ export class AuthService {
                 throw error
             }
 
-            throw ErrorWrapper("Something went wrong. Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong. Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
@@ -87,7 +87,7 @@ export class AuthService {
         } catch (error) {
             Logger.error(`Error in finidng user: ${error?.error_description}`)
             if(error instanceof AuthApiError){
-                throw ErrorWrapper(error?.error_description, {
+                Tools.ErrorWrapper(error?.error_description, {
                     code: error?.statusCode,
                     typename: error?.body ? JSON.parse(error.body).name : "AuthError"
                 })
@@ -97,7 +97,7 @@ export class AuthService {
                 throw error
             }
 
-            throw ErrorWrapper("Something went wrong. Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong. Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
@@ -110,7 +110,7 @@ export class AuthService {
         } catch (error) {
             Logger.error(`Error in sneding otp: ${error?.error_description}`)
             if(error instanceof AuthApiError){
-                throw ErrorWrapper(error?.error_description, {
+                throw Tools.ErrorWrapper(error?.error_description, {
                     code: error?.statusCode,
                     typename: error?.body ? JSON.parse(error.body).name : "AuthError"
                 })
@@ -120,7 +120,7 @@ export class AuthService {
                 throw error
             }
 
-            throw ErrorWrapper("Something went wrong. Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong. Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })

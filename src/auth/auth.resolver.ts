@@ -3,13 +3,14 @@ import { AuthService } from './auth.service';
 import { OtpDto, SignInDto, SignUpDto } from '../dto';
 import { HttpStatus, Logger, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from 'src/interceptors/validation';
-import { ErrorWrapper } from 'src/utils/exceptions';
+import * as Tools from '../utils/tool';
 import { GraphQLError } from 'graphql';
 import { SuccessResponse } from 'src/entities/response.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Resolver(SuccessResponse)
 export class AuthResolver {
-    constructor(private readonly authService: AuthService){}
+    constructor(private readonly authService: AuthService, private readonly jwtService: JwtService){}
 
     @Mutation(() => SuccessResponse)
     @UseInterceptors(new ValidateInput(SignUpDto))
@@ -17,7 +18,7 @@ export class AuthResolver {
         try {
             const { data } = await this.authService.findOne({ email: signUpDto.email })
             if(data?.length > 0) {
-                throw ErrorWrapper('Email is already taken', {
+                throw Tools.ErrorWrapper('Email is already taken', {
                     code: HttpStatus.CONFLICT,
                     typename: "ConflictError"
                 })
@@ -26,9 +27,10 @@ export class AuthResolver {
             const user = await this.authService.signup({ ...signUpDto, connection: process.env.CONNECTION_TYPE, password: "Password@1" })
             return {
                 user: {
-                    id: user?.data?.id,
+                    id: user?.data?.['_id'],
                     email: user?.data?.email,
-                    name: user?.data?.name
+                    username: user?.data?.name
+
                 },
                 message: "You've successfully registered",
                 code: HttpStatus.CREATED,
@@ -39,7 +41,7 @@ export class AuthResolver {
             if(error instanceof GraphQLError){
                 throw error;
             }
-            throw ErrorWrapper("Something went wrong! Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong! Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
@@ -50,26 +52,37 @@ export class AuthResolver {
     @UseInterceptors(new ValidateInput(SignInDto))
     async signIn(@Args('signInDto') signInDto: SignInDto): Promise<SuccessResponse>{
         try {
+            let access_token;
             const { data } = await this.authService.findOne({ email: signInDto.email })
-            // if(data?.length === 0) throw new ResourceNotFoundException('Incorrect credential')
-            // if(!data[0]?.email_verified) throw new ValidationFailedException('Email is yet to be verified. Kindly verify to continue')
             if(data?.length === 0){
-                throw ErrorWrapper("Incorrect Credential", {
+                throw Tools.ErrorWrapper("Incorrect Credentials", {
                     code: HttpStatus.NOT_FOUND,
                     typename: "NotFoundError"
                 })
             }
 
             if(!data[0]?.email_verified){
-                throw ErrorWrapper("Email is yet to be verified", {
+                throw Tools.ErrorWrapper("Email is yet to be verified", {
                     code: HttpStatus.FORBIDDEN,
                     typename: "ForbiddenError"
                 })
             }
 
             const user = await this.authService.signin(signInDto)
+            if(user?.data?.access_token){
+                access_token = this.jwtService.sign(
+                    {
+                        sub: data[0]?.user_id,
+                        email: data[0]?.email
+                    },
+                    {
+                        secret: process.env.TOKEN_SECRET,
+                        expiresIn: '60m'
+                    }
+                )
+            }
             return {
-                token: user?.data?.access_token,
+                token: access_token,
                 message: "Login Successful",
                 code: HttpStatus.OK,
                 status: "success"
@@ -79,7 +92,7 @@ export class AuthResolver {
             if(error instanceof GraphQLError){
                 throw error;
             }
-            throw ErrorWrapper("Something went wrong! Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong! Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
@@ -92,14 +105,14 @@ export class AuthResolver {
         try {
             const { data } = await this.authService.findOne({ email: otpDtop.email })
             if(data?.length === 0){
-                throw ErrorWrapper("Incorrect Credential", {
+                throw Tools.ErrorWrapper("Incorrect Credential", {
                     code: HttpStatus.NOT_FOUND,
                     typename: "NotFoundError"
                 })
             }
 
             if(!data[0]?.email_verified){
-                throw ErrorWrapper("Email is yet to be verified", {
+                throw Tools.ErrorWrapper("Email is yet to be verified", {
                     code: HttpStatus.FORBIDDEN,
                     typename: "ForbiddenError"
                 })
@@ -116,7 +129,7 @@ export class AuthResolver {
             if(error instanceof GraphQLError){
                 throw error;
             }
-            throw ErrorWrapper("Something went wrong! Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong! Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })

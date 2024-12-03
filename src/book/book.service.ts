@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Book } from '../entities/book.entity'
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateInput, UpdateInput } from '../dto'
-import { ResourceNotFoundException } from '../utils/custom-exceptions.ts';
+import * as Tools from '../utils/tool'
 
 @Injectable()
 export class BookService {
@@ -23,19 +23,34 @@ export class BookService {
         const book = await this.bookRepository.findOne({
             where: { id }
         })
-        if(!book) throw new ResourceNotFoundException('Book');
+        if(!book) {
+            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+                code: HttpStatus.NOT_FOUND,
+                typename: "NotFoundError"
+            })
+        }
         return book;
     }
 
     async update(id: number, updateInput: UpdateInput): Promise<Book> {
         const book = await this.bookRepository.preload({ id, ...updateInput })
-        if (!book) throw new ResourceNotFoundException('Book cannot be found');
+        if (!book) {
+            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+                code: HttpStatus.NOT_FOUND,
+                typename: "NotFoundError"
+            })
+        }
         return await this.bookRepository.save(book)
     }
 
     async remove(id: number): Promise<Book>{
         const book = await this.bookRepository.preload({ id })
-        if (!book) throw new ResourceNotFoundException('Book cannot be found');
+        if (!book) {
+            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+                code: HttpStatus.NOT_FOUND,
+                typename: "NotFoundError"
+            })
+        }
         return await this.bookRepository.remove(book);
     }
 }

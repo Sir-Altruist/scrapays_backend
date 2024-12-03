@@ -9,17 +9,18 @@ type Book {
 }
 
 type User {
-  id: ID!
+  id: ID
   email: String!
   password: String!
-  name: String!
+  username: String!
   connection: String
 }
 
 type SuccessResponse {
-  user: User
-  token: String
-  books: [Book!]
+  user: User!
+  token: String!
+  books: [Book!]!
+  book: Book!
   message: String!
   code: Int!
   status: String!
@@ -27,63 +28,16 @@ type SuccessResponse {
 
 type Query {
   findBooks: SuccessResponse!
-  findBook(id: Int!): ResponseResult!
-  deleteBook(id: Int!): ResponseResult!
-}
-
-union ResponseResult = Book | User | Forbidden | NotFoundError | ValidationError | ServerError | JSONApiResponse | UnauthorizationError
-
-type Forbidden {
-  status: String!
-  message: String
-  code: Int!
-}
-
-type NotFoundError {
-  status: String!
-  message: String!
-  code: Int!
-  resourceType: String
-}
-
-type ValidationError {
-  status: String!
-  message: String!
-  code: Int!
-  validationError: String
-}
-
-type ServerError {
-  status: String!
-  message: String!
-  code: Int!
-  details: String
-}
-
-type JSONApiResponse {
-  status: String!
-  message: String!
-  code: Int!
-  user: User
-  books: [Book!]
-  book: Book
-  token: String
-  otp: String
-}
-
-type UnauthorizationError {
-  status: String!
-  message: String!
-  code: Int!
-  unauthorizationError: String
+  findBook(id: Int!): SuccessResponse!
+  deleteBook(id: Int!): SuccessResponse!
 }
 
 type Mutation {
   signUp(signUpDto: SignUpDto!): SuccessResponse!
   signIn(signInDto: SignInDto!): SuccessResponse!
   sendOtp(otpDto: OtpDto!): SuccessResponse!
-  createBook(createInput: CreateInput!): ResponseResult!
-  updateBook(id: Int!, updateInput: UpdateInput!): ResponseResult!
+  createBook(createInput: CreateInput!): SuccessResponse!
+  updateBook(id: Int!, updateInput: UpdateInput!): SuccessResponse!
 }
 
 input SignUpDto {

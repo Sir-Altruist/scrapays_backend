@@ -6,11 +6,10 @@ import {
     HttpStatus
   } from '@nestjs/common';
   import { validate } from 'class-validator';
-  import { ValidationFailedException } from '../utils/custom-exceptions.ts.js';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { plainToInstance } from 'class-transformer';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { ErrorWrapper } from '../utils/exceptions';
+import * as Tools from '../utils/tool.js';
 import { GraphQLError } from 'graphql';
 
   
@@ -35,7 +34,10 @@ import { GraphQLError } from 'graphql';
             const inputArg = Object.values(contextArgs).find(arg => arg !== undefined);
 
             if (!inputArg) {
-                return of(new ValidationFailedException('No input argument found for validation'))
+                throw Tools.ErrorWrapper('No input argument found for validation', {
+                    code: HttpStatus.BAD_REQUEST,
+                    typename: "ValidationError"
+                })
             }
          
             // Convert plain object to class instance
@@ -49,11 +51,10 @@ import { GraphQLError } from 'graphql';
             if (errors.length > 0) {
                 //Transform validation errors
                 const formattedErrors = errors.map(error => Object.values(error?.constraints || {}).join(','))
-                throw ErrorWrapper(formattedErrors[0], {
+                throw Tools.ErrorWrapper(formattedErrors[0], {
                     code: HttpStatus.BAD_REQUEST,
                     typename: "ValidationError"
                 })
-                // throw new ValidationFailedException(formattedErrors[0])
             }
              return next.handle();
         }
@@ -62,7 +63,7 @@ import { GraphQLError } from 'graphql';
                 throw error
             }
 
-            throw ErrorWrapper(error?.message, {
+            throw Tools.ErrorWrapper(error?.message, {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })

@@ -2,13 +2,13 @@ mutation SignUp {
   signUp(
     signUpDto: {
       email: string
-      name: string
+      name: string,
     }
   ) {
     user {
       id
       email
-      name
+      username
     }
     message
     code

@@ -1,18 +1,16 @@
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { BookService } from './book.service';
-import { CreateInput, UpdateInput, ResponseResult } from '../dto';
+import { CreateInput, UpdateInput } from '../dto';
 import { HttpStatus, Logger, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from '../interceptors/validation';
-import { ValidationFailedException } from 'src/utils/custom-exceptions.ts';
-import { ErrorWrapper, handleError } from 'src/utils/exceptions';
-import { AuthGuard } from 'src/auth/auth-token';
+import * as Tools from '../utils/tool'
+import { AuthGuard } from '../auth/auth.guard';
 import { SuccessResponse } from 'src/entities/response.entity';
 import { GraphQLError } from 'graphql';
-import { JwtAuthGuard } from 'src/middlewares/authGuard';
 
 
 @Resolver(SuccessResponse)
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard)
 export class BookResolver {
     constructor(private readonly bookService: BookService){}
 
@@ -31,66 +29,102 @@ export class BookResolver {
             if(error instanceof GraphQLError){
                 throw error;
             }
-            throw ErrorWrapper("Something went wrong! Please retry", {
+            throw Tools.ErrorWrapper("Something went wrong! Please retry", {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
         }
     }
 
-    @Mutation(() => ResponseResult)
+    @Mutation(() => SuccessResponse)
     @UseInterceptors(new ValidateInput(CreateInput))
-    async createBook(@Args('createInput') createInput: CreateInput): Promise<typeof ResponseResult>{
+    async createBook(@Args('createInput') createInput: CreateInput): Promise<SuccessResponse>{
         try {
-            return await this.bookService.create(createInput)
+            // return await this.bookService.create(createInput)
+            const book = await this.bookService.create(createInput)
+            return {
+                book,
+                message: "Successfully uploaded book",
+                status: "success",
+                code: HttpStatus.CREATED
+            }
         } catch (error) {
-            Logger.error(`Error uploading book: ${error?.message}`)
-            return handleError(error)
+            Logger.error(`Error creating new book: ${error?.message}`)
+            if(error instanceof GraphQLError){
+                throw error
+            }
+            throw Tools.ErrorWrapper("Something went wrong. Please try again", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 
-    @Query(() => ResponseResult)
-    async findBook(@Args('id', { type: () => Int}) id: number): Promise<typeof ResponseResult> {
+    @Query(() => SuccessResponse)
+    async findBook(@Args('id', { type: () => Int}) id: number): Promise<SuccessResponse> {
         try {
+            Tools.checkPositiveId(id)
+            const book =  await this.bookService.findOne(id)
+            return {
+                book,
+                message: `Successfully retrived book ${id}`,
+                status: "success",
+                code: HttpStatus.OK
 
-            if(typeof id !== "number") throw new ValidationFailedException('Invalid Id type');
-
-            if (id <= 0) throw new ValidationFailedException('Id must be a positive number');
-
-            return await this.bookService.findOne(id)
+            }
         } catch (error) {
             Logger.error(`Error retrieving book (${id}): ${error?.message}`)
-            return handleError(error)
+            if(error instanceof GraphQLError){
+                throw error
+            }
+            throw Tools.ErrorWrapper("Something went wrong. Please try again", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
     
-    @Mutation(() => ResponseResult)
-    async updateBook(@Args('id', { type: () => Int}) id: number, @Args('updateInput') updateInput: UpdateInput): Promise<typeof ResponseResult>{
+    @Mutation(() => SuccessResponse)
+    async updateBook(@Args('id', { type: () => Int}) id: number, @Args('updateInput') updateInput: UpdateInput): Promise<SuccessResponse>{
         try {
-
-            if(typeof id !== "number") throw new ValidationFailedException('Invalid Id type');
-
-            if (id <= 0) throw new ValidationFailedException('Id must be a positive number');
-
-            return await this.bookService.update(id, updateInput)
+            Tools.checkPositiveId(id)
+            await this.bookService.update(id, updateInput)
+            return {
+               message: `Successfully updated book ${id}`,
+               status: "success",
+               code: HttpStatus.OK 
+            }
         } catch (error) {
             Logger.error(`Error updating book (${id}): ${error?.message}`)
-            return handleError(error)
+            if(error instanceof GraphQLError){
+                throw error
+            }
+            throw Tools.ErrorWrapper("Something went wrong. Please try again", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 
-    @Query(() => ResponseResult)
-    async deleteBook(@Args('id', { type: () => Int}) id: number): Promise<typeof ResponseResult>{
+    @Query(() => SuccessResponse)
+    async deleteBook(@Args('id', { type: () => Int}) id: number): Promise<SuccessResponse>{
         try { 
-
-            if(typeof id !== "number") throw new ValidationFailedException('Invalid Id type');
-
-            if (id <= 0) throw new ValidationFailedException('Id must be a positive number'); 
-
-            return await this.bookService.remove(id)
+            Tools.checkPositiveId(id)
+            await this.bookService.remove(id)
+            return {
+                message: `Successfully deleted book ${id}`,
+                status: "success",
+                code: HttpStatus.OK 
+             }
         } catch (error) {
             Logger.error(`Error updating book (${id}): ${error?.message}`)
-            return handleError(error)
+            if(error instanceof GraphQLError){
+                throw error
+            }
+            throw Tools.ErrorWrapper("Something went wrong. Please try again", {
+                code: HttpStatus.INTERNAL_SERVER_ERROR,
+                typename: "ServerError"
+            })
         }
     }
 }

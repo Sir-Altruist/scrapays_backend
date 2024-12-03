@@ -7,7 +7,6 @@ import { join } from 'path';
 import { ApolloDriverConfig, ApolloDriver } from '@nestjs/apollo';
 import { BookModule } from './book/book.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 import { GraphQLError } from 'graphql';
 
 @Module({
@@ -22,7 +21,6 @@ import { GraphQLError } from 'graphql';
     context: ({ req }) => ({ req }),
     formatError: (error: GraphQLError) => {
       const { message, extensions } = error;
-      console.log('code: ', extensions?.code)
       return {
         message,
         status: extensions?.status,
@@ -41,12 +39,8 @@ import { GraphQLError } from 'graphql';
     migrationsTableName: 'migrations'
   }),
   AuthModule,
-  JwtModule.register({
-    global: true,
-    secret: process.env.AUTH0_CLIENT_SECRET,
-    signOptions: { expiresIn: "60m"}
-  }), 
-  BookModule],
+  BookModule
+],
   controllers: [AppController],
   providers: [AppService],
 })

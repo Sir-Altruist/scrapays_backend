@@ -1,9 +1,9 @@
-```
 {
   findBooks {
-		id,
-    name,
-    description
-  }
+      books {
+        id
+        name
+        description
+      }
+    }
 }
-```

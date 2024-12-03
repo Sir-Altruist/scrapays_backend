@@ -1,20 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
-// import { AuthGuard } from './auth-token';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthMiddleware } from 'src/middlewares/auth';
+import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from './auth.guard';
 
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register({
-      signOptions: { expiresIn: "60s"},
-      secret: 'sample'
-    })
+  imports: [],
+  providers: [
+    AuthResolver, 
+    AuthService, 
+    AuthGuard, 
+    JwtService
   ],
-  providers: [AuthResolver, AuthService, AuthMiddleware]
+  exports: [AuthGuard]
 })
 export class AuthModule {}

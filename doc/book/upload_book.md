@@ -1,22 +1,12 @@
-```
 mutation {
   createBook(createInput: {
-    name: "value",
-    description: "value"
+    name: string,
+    description: string
   }) {
-    __typename
-        __typename
-        ...on Book {
-          id,
-          name
-        }
-    
-    ... on ValidationError {
-      status,
-      message,
-      code
+    book {
+      id,
+      name,
+      description
     }
-    
   }
 }
-```
