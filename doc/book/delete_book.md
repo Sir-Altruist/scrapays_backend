@@ -1,5 +1,5 @@
 {
-  deleteBook(id: 7){
+  deleteBook(id: $id){
    message,
     code,
     status

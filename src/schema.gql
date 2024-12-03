@@ -29,7 +29,6 @@ type SuccessResponse {
 type Query {
   findBooks: SuccessResponse!
   findBook(id: Int!): SuccessResponse!
-  deleteBook(id: Int!): SuccessResponse!
 }
 
 type Mutation {
@@ -38,6 +37,7 @@ type Mutation {
   sendOtp(otpDto: OtpDto!): SuccessResponse!
   createBook(createInput: CreateInput!): SuccessResponse!
   updateBook(id: Int!, updateInput: UpdateInput!): SuccessResponse!
+  deleteBook(id: Int!): SuccessResponse!
 }
 
 input SignUpDto {

@@ -67,7 +67,7 @@ export class BookResolver {
             const book =  await this.bookService.findOne(id)
             return {
                 book,
-                message: `Successfully retrived book ${id}`,
+                message: `Successfully retrived book`,
                 status: "success",
                 code: HttpStatus.OK
 
@@ -90,7 +90,7 @@ export class BookResolver {
             Tools.checkPositiveId(id)
             await this.bookService.update(id, updateInput)
             return {
-               message: `Successfully updated book ${id}`,
+               message: `Successfully updated book`,
                status: "success",
                code: HttpStatus.OK 
             }
@@ -106,13 +106,13 @@ export class BookResolver {
         }
     }
 
-    @Query(() => SuccessResponse)
+    @Mutation(() => SuccessResponse)
     async deleteBook(@Args('id', { type: () => Int}) id: number): Promise<SuccessResponse>{
         try { 
             Tools.checkPositiveId(id)
             await this.bookService.remove(id)
             return {
-                message: `Successfully deleted book ${id}`,
+                message: `Successfully deleted book`,
                 status: "success",
                 code: HttpStatus.OK 
              }

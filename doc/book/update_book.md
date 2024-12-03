@@ -1,5 +1,5 @@
 mutation {
-  updateBook(id: 2, updateInput: {
+  updateBook(id: $id, updateInput: {
     description: string
   }) { 
    message,

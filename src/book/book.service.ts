@@ -24,7 +24,7 @@ export class BookService {
             where: { id }
         })
         if(!book) {
-            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+            throw Tools.ErrorWrapper(`Book cannot be found`, {
                 code: HttpStatus.NOT_FOUND,
                 typename: "NotFoundError"
             })
@@ -35,7 +35,7 @@ export class BookService {
     async update(id: number, updateInput: UpdateInput): Promise<Book> {
         const book = await this.bookRepository.preload({ id, ...updateInput })
         if (!book) {
-            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+            throw Tools.ErrorWrapper(`Book cannot be found`, {
                 code: HttpStatus.NOT_FOUND,
                 typename: "NotFoundError"
             })
@@ -46,7 +46,7 @@ export class BookService {
     async remove(id: number): Promise<Book>{
         const book = await this.bookRepository.preload({ id })
         if (!book) {
-            throw Tools.ErrorWrapper(`Book ${id} cannot be found`, {
+            throw Tools.ErrorWrapper(`Book cannot be found`, {
                 code: HttpStatus.NOT_FOUND,
                 typename: "NotFoundError"
             })

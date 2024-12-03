@@ -1,5 +1,5 @@
 {
-  findBook(id: 1){
+  findBook(id: $id){
    book {
     id,
     name,
