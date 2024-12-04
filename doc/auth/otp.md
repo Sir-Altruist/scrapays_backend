@@ -1,3 +1,4 @@
+```
 mutation {
   sendOtp(otpDto: {
     email: string
@@ -6,3 +7,4 @@ mutation {
     status
   }
 }
+```

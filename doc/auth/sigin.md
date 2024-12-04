@@ -1,3 +1,4 @@
+```
 mutation {
   signIn(signInDto: {
     email: string,
@@ -9,3 +10,4 @@ mutation {
     code
   }
 }
+```
