@@ -127,6 +127,13 @@ export class AuthService {
         }
     }
 
+    // async fetchProfile(id: string): Promise<object>{
+    //     // Convert to GraphQL context
+    //     const gqlContext = GqlExecutionContext.create(context);
+    //     // Get the arguments from the GraphQL context
+    //     const req = gqlContext.getArgByIndex(2)['req']
+    // }
+
     // async sendEmail(payload: SendEmailRequest): Promise<VoidApiResponse> {
     //     try {
     //         // return await this.management.users.(payload)
