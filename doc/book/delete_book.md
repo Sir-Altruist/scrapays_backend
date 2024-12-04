@@ -1,3 +1,4 @@
+```
 {
   deleteBook(id: $id){
    message,
@@ -5,3 +6,4 @@
     status
   }
 }
+```

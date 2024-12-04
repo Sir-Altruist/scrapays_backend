@@ -1,3 +1,4 @@
+```
 mutation {
   updateBook(id: $id, updateInput: {
     description: string
@@ -7,3 +8,4 @@ mutation {
     code
   }
 }
+```

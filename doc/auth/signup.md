@@ -1,3 +1,4 @@
+```
 mutation SignUp {
   signUp(
     signUpDto: {
@@ -15,3 +16,4 @@ mutation SignUp {
     status
   }
 }
+```
