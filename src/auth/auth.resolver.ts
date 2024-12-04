@@ -61,12 +61,12 @@ export class AuthResolver {
                 })
             }
 
-            if(!data[0]?.email_verified){
-                throw Tools.ErrorWrapper("Email is yet to be verified", {
-                    code: HttpStatus.FORBIDDEN,
-                    typename: "ForbiddenError"
-                })
-            }
+            // if(!data[0]?.email_verified){
+            //     throw Tools.ErrorWrapper("Email is yet to be verified", {
+            //         code: HttpStatus.FORBIDDEN,
+            //         typename: "ForbiddenError"
+            //     })
+            // }
 
             const user = await this.authService.signin(signInDto)
             if(user?.data?.access_token){
@@ -111,12 +111,12 @@ export class AuthResolver {
                 })
             }
 
-            if(!data[0]?.email_verified){
-                throw Tools.ErrorWrapper("Email is yet to be verified", {
-                    code: HttpStatus.FORBIDDEN,
-                    typename: "ForbiddenError"
-                })
-            }
+            // if(!data[0]?.email_verified){
+            //     throw Tools.ErrorWrapper("Email is yet to be verified", {
+            //         code: HttpStatus.FORBIDDEN,
+            //         typename: "ForbiddenError"
+            //     })
+            // }
             
             await this.authService.sendOtp({ email: otpDtop?.email, send: 'code' })
             return {

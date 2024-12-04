@@ -126,4 +126,30 @@ export class AuthService {
             })
         }
     }
+
+    // async sendEmail(payload: SendEmailRequest): Promise<VoidApiResponse> {
+    //     try {
+    //         // return await this.management.users.(payload)
+    //         await this.management(`/api/v2/jobs/verification-email`, {
+    //             user_id: userId
+    //         });
+    //     } catch (error) {
+    //         Logger.error(`Error in sneding otp: ${error?.error_description}`)
+    //         if(error instanceof AuthApiError){
+    //             throw Tools.ErrorWrapper(error?.error_description, {
+    //                 code: error?.statusCode,
+    //                 typename: error?.body ? JSON.parse(error.body).name : "AuthError"
+    //             })
+    //         }
+
+    //         if(error instanceof GraphQLError){
+    //             throw error
+    //         }
+
+    //         throw Tools.ErrorWrapper("Something went wrong. Please retry", {
+    //             code: HttpStatus.INTERNAL_SERVER_ERROR,
+    //             typename: "ServerError"
+    //         })
+    //     }
+    // }
 }

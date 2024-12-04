@@ -23,7 +23,9 @@ export class AuthGuard implements CanActivate {
         }
             
         try {
-            const decoded = this.jwtService.decode(token)
+            const decoded = this.jwtService.verify(token, {
+                secret: process.env.TOKEN_SECRET
+            })
             if(!decoded){
                 throw Tools.ErrorWrapper("Invalid token in header", {
                     code: HttpStatus.UNAUTHORIZED,
