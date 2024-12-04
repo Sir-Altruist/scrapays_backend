@@ -1,12 +1,14 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { OtpDto, SignInDto, SignUpDto } from '../dto';
-import { HttpStatus, Logger, UseInterceptors } from '@nestjs/common';
+import { HttpStatus, Logger, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ValidateInput } from 'src/interceptors/validation';
 import * as Tools from '../utils/tool';
 import { GraphQLError } from 'graphql';
 import { SuccessResponse } from 'src/entities/response.entity';
 import { JwtService } from '@nestjs/jwt';
+import { CurrentUser } from './auth.decorator';
+import { AuthGuard } from './auth.guard';
 
 @Resolver(SuccessResponse)
 export class AuthResolver {
@@ -61,19 +63,20 @@ export class AuthResolver {
                 })
             }
 
-            if(!data[0]?.email_verified){
-                throw Tools.ErrorWrapper("Email is yet to be verified", {
-                    code: HttpStatus.FORBIDDEN,
-                    typename: "ForbiddenError"
-                })
-            }
+            // if(!data[0]?.email_verified){
+            //     throw Tools.ErrorWrapper("Email is yet to be verified", {
+            //         code: HttpStatus.FORBIDDEN,
+            //         typename: "ForbiddenError"
+            //     })
+            // }
 
             const user = await this.authService.signin(signInDto)
             if(user?.data?.access_token){
                 access_token = this.jwtService.sign(
                     {
                         sub: data[0]?.user_id,
-                        email: data[0]?.email
+                        email: data[0]?.email,
+                        username: data[0]?.name
                     },
                     {
                         secret: process.env.TOKEN_SECRET,
@@ -111,12 +114,12 @@ export class AuthResolver {
                 })
             }
 
-            if(!data[0]?.email_verified){
-                throw Tools.ErrorWrapper("Email is yet to be verified", {
-                    code: HttpStatus.FORBIDDEN,
-                    typename: "ForbiddenError"
-                })
-            }
+            // if(!data[0]?.email_verified){
+            //     throw Tools.ErrorWrapper("Email is yet to be verified", {
+            //         code: HttpStatus.FORBIDDEN,
+            //         typename: "ForbiddenError"
+            //     })
+            // }
             
             await this.authService.sendOtp({ email: otpDtop?.email, send: 'code' })
             return {
@@ -133,6 +136,22 @@ export class AuthResolver {
                 code: HttpStatus.INTERNAL_SERVER_ERROR,
                 typename: "ServerError"
             })
+        }
+    }
+
+    /** This is where I am using the decorator to get the logged in user details */
+    @UseGuards(AuthGuard)
+    @Query(() => SuccessResponse)
+    async fetchProfile(@CurrentUser() user: any): Promise<SuccessResponse>{
+        return {
+            user: {
+                id: user?.sub,
+                email: user?.email,
+                username: user?.username
+            },
+            message: "Successfully retrieved user details",
+            status: "Success",
+            code: HttpStatus.OK
         }
     }
 

@@ -27,6 +27,7 @@ type SuccessResponse {
 }
 
 type Query {
+  fetchProfile: SuccessResponse!
   findBooks: SuccessResponse!
   findBook(id: Int!): SuccessResponse!
 }
